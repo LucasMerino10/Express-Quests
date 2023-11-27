@@ -31,3 +31,48 @@ describe("GET /api/users/:id", () => {
     expect(response.status).toEqual(404);
   });
 });
+
+describe("POST /api/users", () => {
+  it("should return created user", async () => {
+    const newUser = {
+      firstname: "Toto",
+      lastname: "Wilder",
+      email: `${crypto.randomUUID()}@wild.co`,
+      city: "Lille",
+      language: "Français",
+    };
+
+    const response = await request(app).post("/api/users").send(newUser);
+    expect(response.status).toEqual(201);
+    expect(response.body).toHaveProperty("id");
+    expect(typeof response.body.id).toBe("number");
+
+    const [result] = await database.query("SELECT * FROM users WHERE id = ?", [
+      response.body.id,
+    ]);
+
+    const [userInDatabase] = result;
+
+    expect(userInDatabase).toHaveProperty("id");
+    expect(typeof userInDatabase.id).toBe("number");
+    expect(userInDatabase).toHaveProperty("firstname");
+    expect(typeof userInDatabase.firstname).toBe("string");
+    expect(userInDatabase).toHaveProperty("lastname");
+    expect(typeof userInDatabase.lastname).toBe("string");
+    expect(userInDatabase).toHaveProperty("email");
+    expect(typeof userInDatabase.email).toBe("string");
+    expect(userInDatabase).toHaveProperty("city");
+    expect(typeof userInDatabase.city).toBe("string");
+    expect(userInDatabase).toHaveProperty("language");
+    expect(typeof userInDatabase.language).toBe("string");
+    expect(userInDatabase.firstname).toStrictEqual(newUser.firstname);
+  });
+
+  it("should return an error", async () => {
+    const userInDatabase = { firstname: "Toto" };
+
+    const response = await request(app).post("/api/users").send(userInDatabase);
+
+    expect(response.status).toEqual(500);
+  });
+});
