@@ -5,7 +5,6 @@ const app = require("../src/app");
 const crypto = require("crypto");
 
 const database = require("../database");
-const exp = require("constants");
 
 afterAll(() => database.end);
 
@@ -170,6 +169,40 @@ describe("PUT /api/users/:id", () => {
 
     const response = await request(app).put("/api/users/0").send(newUser);
 
+    expect(response.status).toEqual(404);
+  });
+});
+
+describe("DELETE /api/users/:id", () => {
+  it("should delete a user", async () => {
+    const newUser = {
+      firstname: "Toto",
+      lastname: "Wilder",
+      email: `${crypto.randomUUID()}@wild.co`,
+      city: "Lille",
+      language: "Français",
+    };
+
+    const [response] = await database.query(
+      "INSERT INTO users (firstname, lastname, email, city, language) VALUES(?, ?, ?, ?, ?)",
+      [
+        newUser.firstname,
+        newUser.lastname,
+        newUser.email,
+        newUser.city,
+        newUser.language,
+      ]
+    );
+
+    const id = response.insertId;
+
+    const result = await request(app).delete(`/api/users/${id}`);
+
+    expect(result.status).toEqual(204);
+  });
+
+  it("should return an error", async () => {
+    const response = await request(app).delete("/api/users/0");
     expect(response.status).toEqual(404);
   });
 });
