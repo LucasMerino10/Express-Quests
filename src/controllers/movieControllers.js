@@ -1,8 +1,47 @@
 const database = require("../../database");
 
 const getMovies = (req, res) => {
+  let sql = "SELECT * FROM movies";
+  const sqlValues = [];
+  if (req.query.title) {
+    sql += " WHERE title LIKE ?";
+    sqlValues.push(`%${req.query.title}%`);
+  }
+  if (req.query.director) {
+    sqlValues.length
+      ? (sql += " AND director LIKE ?")
+      : (sql += " WHERE director LIKE ?");
+    sqlValues.push(`%${req.query.director}%`);
+  }
+  if (req.query.max_year) {
+    sqlValues.length ? (sql += " AND year <= ?") : (sql += " WHERE year <= ?");
+    sqlValues.push(req.query.max_year);
+  }
+  if (req.query.min_year) {
+    sqlValues.length ? (sql += " AND year >= ?") : (sql += " WHERE year >= ?");
+    sqlValues.push(req.query.min_year);
+  }
+  if (req.query.color) {
+    sqlValues.length ? (sql += " AND color = ?") : (sql += " WHERE color = ?");
+    sqlValues.push(req.query.color);
+  }
+  if (req.query.max_duration) {
+    sqlValues.length
+      ? (sql += " AND duration <= ?")
+      : (sql += " WHERE duration <= ?");
+    sqlValues.push(req.query.max_duration);
+  }
+  if (req.query.min_duration) {
+    sqlValues.length
+      ? (sql += " AND duration >= ?")
+      : (sql += " WHERE duration >= ?");
+    sqlValues.push(req.query.min_duration);
+  }
   database
-    .query("SELECT * FROM movies")
+    .query(
+      sql,
+      sqlValues.map((value) => value)
+    )
     .then(([movies]) => {
       res.status(200).json(movies);
     })

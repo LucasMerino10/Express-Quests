@@ -1,8 +1,45 @@
 const database = require("../../database");
 
 const getUsers = (req, res) => {
+  let initialSql = "SELECT * FROM users";
+  const sqlValues = [];
+  if (req.query.firstname) {
+    sqlValues.push({
+      column: "firstname",
+      value: `%${req.query.firstname}%`,
+      operator: "LIKE",
+    });
+  }
+  if (req.query.lastname) {
+    sqlValues.push({
+      column: "lastname",
+      value: `%${req.query.lastname}%`,
+      operator: "LIKE",
+    });
+  }
+  if (req.query.city) {
+    sqlValues.push({
+      column: "city",
+      value: req.query.city,
+      operator: "=",
+    });
+  }
+  if (req.query.language) {
+    sqlValues.push({
+      column: "language",
+      value: req.query.language,
+      operator: "=",
+    });
+  }
   database
-    .query("SELECT * FROM users")
+    .query(
+      sqlValues.reduce(
+        (sql, { column, operator }, index) =>
+          `${sql} ${index === 0 ? "WHERE" : "AND"} ${column} ${operator} ?`,
+        initialSql
+      ),
+      sqlValues.map(({ value }) => value)
+    )
     .then(([users]) => {
       res.status(200).json(users);
     })
